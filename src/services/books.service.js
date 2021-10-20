@@ -14,54 +14,44 @@ module.exports = class BooksService {
 
   getBookById(id) {
     const books = this.booksReader.read();
-    for (const book of books) {
-      if (book.id.toString() === id) {
-        return book;
-      }
-    }
+    return books.find((book) => book.id === id);
   }
 
   deleteBookById(id) {
-    const books = this.booksReader.read();
-  
-    const bookToDelete = books.find((book) => book.id.toString() === id);
-  
+    const bookToDelete = this.getBookById(id);
+
     if (bookToDelete) {
-      const filteredbooks = books.filter((book) => book.id != bookToDelete.id);
-      this.booksReader.write(filteredbooks);
-      
+      const filteredBooks = books.filter((book) => book.id !== bookToDelete.id);
+      this.booksReader.write(filteredBooks);
+
       return bookToDelete;
     }
   }
 
   addNewBook(body) {
-    const { title, description, author } = body;
-
     const books = this.booksReader.read();
-    const lastId = this.booksReader.getLastId();
+    const id = this.booksReader.incrementLastId()
+    const newBook = {id, ...body};
 
-    books.push({ id: lastId + 1, title, description, author });
+    books.push(newBook);
     this.booksReader.write(books);
-    this.booksReader.incrementLastId();
 
-    return ({id: lastId + 1, title, description, author});
+    return newBook;
   }
 
-  changeBook(id, body) {
-    const { title, description, author } = body;
-
+  updateBook(id, body) {
     const books = this.booksReader.read();
+    const bookToUpdate = this.getBookById(id);
 
-    books.forEach((book) => {
-      if(book.id.toString() === id) {
-        book.title = title;
-        book.description = description;
-        book.author = author;
-      }
-    })
-    
-    this.booksReader.write(books);
-    return ({id, title, description, author});
+    if (bookToUpdate) {
+      this.booksReader.write(books.reduce((acc, book) => {
+        if (book.id === id) {
+          return [...acc, {id, ...body}];
+        }
+        return acc;
+      }), []);
+
+      return {id, ...body};
+    }
   }
-
 }
