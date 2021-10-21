@@ -13,30 +13,25 @@ module.exports = class JsonReader {
   }
 
   write(data) {
-    const allData = fs.readFileSync(this.basePath);
-    const dataObj = JSON.parse(allData);
-    dataObj.data = data;
-
-    fs.writeFileSync(this.basePath, JSON.stringify(dataObj), 'utf8')
-  }
-
-  writeId(id) {
-    const allData = fs.readFileSync(this.basePath);
-    const dataObj = JSON.parse(allData);
-    dataObj.id = id;
-
-    fs.writeFileSync(this.basePath, JSON.stringify(dataObj), 'utf8')
+    fs.writeFileSync(this.basePath, JSON.stringify({
+      ...this.read(),
+      data,
+    }), 'utf8')
   }
 
   getLastId() {
-    const data = fs.readFileSync(this.basePath).toString();
-    return JSON.parse(data).id;
+    return this.read().id;
   }
 
   incrementLastId() {
-    const data = fs.readFileSync(this.basePath).toString();
-    const lastId = JSON.parse(data).id;
+    const data = this.read();
+    const id = ++data.id;
 
-    this.writeId(lastId + 1);
+    this.write({
+      ...data,
+      id,
+    });
+
+    return id;
   }
 }
